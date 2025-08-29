@@ -1,103 +1,172 @@
-import Image from "next/image";
+'use client';
+import React, { useState, useEffect } from 'react';
+import { Chart } from '@/components/Chart';
+import { BollingerSettings } from '@/components/BollingerSettings';
+import { Button } from '@/components/ui/button';
+import { OHLCVData, BollingerBandsSettings } from '@/lib/types';
+import { Settings, TrendingUp } from 'lucide-react';
+import "./globals.css";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [data, setData] = useState<OHLCVData[]>([]);
+  const [showBollinger, setShowBollinger] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bollingerSettings, setBollingerSettings] = useState<BollingerBandsSettings>({
+    inputs: {
+      length: 20,
+      maType: 'SMA',
+      source: 'close',
+      stdDevMultiplier: 2,
+      offset: 0,
+    },
+    style: {
+      basis: {
+        visible: true,
+        color: '#2962ff',
+        lineWidth: 1,
+        lineStyle: 'solid',
+      },
+      upper: {
+        visible: true,
+        color: '#787b86',
+        lineWidth: 1,
+        lineStyle: 'solid',
+      },
+      lower: {
+        visible: true,
+        color: '#787b86',
+        lineWidth: 1,
+        lineStyle: 'solid',
+      },
+      background: {
+        visible: true,
+        opacity: 10,
+      },
+    },
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Load demo data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const response = await fetch('/data/ohlcv.json');
+        const jsonData = await response.json();
+        setData(jsonData);
+      } catch (error) {
+        console.error('Failed to load demo data:', error);
+        // Fallback demo data if file load fails
+        const fallbackData: OHLCVData[] = [
+          { timestamp: 1703721600000, open: 42500, high: 43200, low: 42100, close: 42800, volume: 1500000 },
+          { timestamp: 1703725200000, open: 42800, high: 43500, low: 42600, close: 43200, volume: 1800000 },
+          { timestamp: 1703728800000, open: 43200, high: 43800, low: 42900, close: 43600, volume: 2100000 },
+          { timestamp: 1703732400000, open: 43600, high: 44100, low: 43300, close: 43900, volume: 1900000 },
+          { timestamp: 1703736000000, open: 43900, high: 44500, low: 43700, close: 44200, volume: 2200000 },
+        ];
+        setData(fallbackData);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const handleAddBollinger = () => {
+    setShowBollinger(true);
+  };
+
+  const handleRemoveBollinger = () => {
+    setShowBollinger(false);
+  };
+
+  const handleOpenSettings = () => {
+    setSettingsOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Bollinger Bands Trading Chart
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            Interactive chart with Bollinger Bands technical indicator
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Controls */}
+        <div className="mb-6 flex flex-wrap gap-3">
+          {!showBollinger ? (
+            <Button onClick={handleAddBollinger} className="flex items-center gap-2">
+              <TrendingUp size={16} />
+              Add Bollinger Bands
+            </Button>
+          ) : (
+            <>
+              <Button onClick={handleRemoveBollinger} variant="outline">
+                Remove Bollinger Bands
+              </Button>
+              <Button onClick={handleOpenSettings} variant="outline" className="flex items-center gap-2">
+                <Settings size={16} />
+                Settings
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Chart */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <Chart
+            data={data}
+            bollingerSettings={bollingerSettings}
+            showBollinger={showBollinger}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+
+        {/* Info Panel */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              Current Settings
+            </h3>
+            <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+              <p>Length: {bollingerSettings.inputs.length}</p>
+              <p>MA Type: {bollingerSettings.inputs.maType}</p>
+              <p>StdDev: {bollingerSettings.inputs.stdDevMultiplier}</p>
+              <p>Offset: {bollingerSettings.inputs.offset}</p>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              About Bollinger Bands
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Bollinger Bands are a technical analysis tool that uses a moving average and 
+              standard deviation to identify potential overbought and oversold conditions.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+              Data Info
+            </h3>
+            <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+              <p>Candles: {data.length}</p>
+              <p>Timeframe: 1 Hour</p>
+              <p>Symbol: BTC/USD (Demo)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Settings Modal */}
+        <BollingerSettings
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          settings={bollingerSettings}
+          onSettingsChange={setBollingerSettings}
+        />
+      </div>
     </div>
   );
 }
