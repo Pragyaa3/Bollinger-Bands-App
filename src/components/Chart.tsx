@@ -20,48 +20,41 @@ export const Chart: React.FC<ChartProps> = ({ data, bollingerSettings, showBolli
   useEffect(() => {
     if (!chartRef.current) return;
 
-    const chart = init(chartRef.current!) as KLineChart;
+    const chartElement = chartRef.current; // Copy ref to variable for cleanup
+    const chart = init(chartElement);
     chartInstanceRef.current = chart;
 
-    // Configure chart
-    chart!.setStyles({
+    // Set chart styles
+    (chart as unknown as { setStyles: (s: Record<string, unknown>) => void }).setStyles({
       grid: {
         horizontal: { color: '#e5e5e5' },
         vertical: { color: '#e5e5e5' },
       },
       candle: {
-        type: 'candle_solid' as any, // ✅ cast
+        type: 'candle_solid',
         bar: {
           upColor: '#26a69a',
           downColor: '#ef5350',
           noChangeColor: '#888888',
         },
         tooltip: {
-          showRule: 'always' as any, // ✅ cast
-          showType: 'standard' as any, // ✅ cast
+          showRule: 'always',
+          showType: 'standard',
         },
       },
-      xAxis: {
-        axisLine: {
-          color: '#dddddd',
-        },
-      },
-      yAxis: {
-        axisLine: {
-          color: '#dddddd',
-        },
-      },
+      xAxis: { axisLine: { color: '#dddddd' } },
+      yAxis: { axisLine: { color: '#dddddd' } },
     });
 
     return () => {
-      if (chartInstanceRef.current) {
-        dispose(chartRef.current!);
+      if (chartInstanceRef.current && chartElement) {
+        dispose(chartElement);
         chartInstanceRef.current = null;
       }
     };
   }, []);
 
-  // Update chart data
+  // Update K-line data
   useEffect(() => {
     if (!chartInstanceRef.current || !data.length) return;
 
@@ -74,69 +67,88 @@ export const Chart: React.FC<ChartProps> = ({ data, bollingerSettings, showBolli
       volume: item.volume,
     }));
 
-    chartInstanceRef.current!.applyNewData(klineData); // ✅ non-null assertion
+    (chartInstanceRef.current as unknown as { applyNewData: (d: unknown[]) => void })
+      .applyNewData(klineData);
   }, [data]);
 
-  // Calculate Bollinger Bands
+  // Compute Bollinger Bands data
   useEffect(() => {
     if (!data.length) return;
-
     const bands = computeBollingerBands(data, bollingerSettings.inputs);
     setBollingerData(bands);
   }, [data, bollingerSettings.inputs]);
 
-  // Create Bollinger Bands indicator
-  // Create Bollinger Bands indicator
-useEffect(() => {
-  const chart = chartInstanceRef.current as any;
-  if (!chart) return;
-
-  // remove existing BOLL indicator if any
-  try {
-    chart.removeIndicator({ name: 'BOLL' });
-  } catch (e) {
-    // ignore if not present
-  }
-
-  if (!showBollinger) return;
-
-  // read params from your settings
-  const length = bollingerSettings.inputs.length ?? 20;
-  const stdDev = bollingerSettings.inputs.stdDevMultiplier ?? 2;
-
-  // create built-in Bollinger Bands indicator
-  chart.createIndicator(
-    { name: 'BOLL', calcParams: [length, stdDev] },
-    false // false → render on main price pane, not a separate sub-pane
-  );
-
-  // cleanup on unmount or when deps change
-  return () => {
-    try {
-      chart.removeIndicator({ name: 'BOLL' });
-    } catch (e) {}
-  };
-}, [showBollinger, bollingerSettings.inputs]);
-
-  // Add custom tooltip for Bollinger Bands
+  // Add / remove Bollinger Bands indicator
   useEffect(() => {
     if (!chartInstanceRef.current) return;
 
     const chart = chartInstanceRef.current;
 
-    const handleCrosshair = (data: any) => {
-      if (!showBollinger || !bollingerData.length || !data.dataIndex) return;
-      const index = data.dataIndex;
-      const bollingerPoint = bollingerData[index];
-      if (bollingerPoint && !isNaN(bollingerPoint.basis)) {
-        // tooltip logic (unchanged)
+    const removeBoll = () => {
+      try {
+        (chart as unknown as { removeIndicator: (opts: { name: string }) => void })
+          .removeIndicator({ name: 'BOLL' });
+      } catch {
+        // Silently handle case where no existing BOLL indicator exists
+        console.log('No existing BOLL indicator to remove');
       }
     };
 
-    (chart as any).subscribeAction('onCrosshairChange' as any, handleCrosshair); // ✅ cast
+    removeBoll();
+
+    if (!showBollinger) return;
+
+    const length = bollingerSettings.inputs.length ?? 20;
+    const stdDev = bollingerSettings.inputs.stdDevMultiplier ?? 2;
+
+    try {
+      (chart as unknown as { createIndicator: (opts: { name: string; calcParams: number[] }, isOverlay: boolean) => void })
+        .createIndicator({ name: 'BOLL', calcParams: [length, stdDev] }, false);
+    } catch (error) {
+      console.error('Failed to create BOLL indicator:', error);
+    }
 
     return () => {
-      (chart as any).unsubscribeAction('onCrosshairChange' as any, handleCrosshair); // ✅ cast
+      removeBoll();
+    };
+  }, [showBollinger, bollingerSettings.inputs]);
+
+  // Crosshair tooltip
+  useEffect(() => {
+    if (!chartInstanceRef.current) return;
+
+    const chart = chartInstanceRef.current;
+
+    const handleCrosshair = (e: unknown) => {
+      // The argument might be an Event wrapping the data
+      const crosshairData =
+        e && typeof e === 'object' && 'data' in e
+          ? (e as Record<string, unknown>).data
+          : e;
+
+      if (!showBollinger || !bollingerData.length) return;
+
+      if (
+        typeof crosshairData === 'object' &&
+        crosshairData !== null &&
+        'dataIndex' in crosshairData
+      ) {
+        const { dataIndex } = crosshairData as { dataIndex: number };
+        const point = bollingerData[dataIndex];
+        if (point && !isNaN(point.basis)) {
+          console.log('Bollinger point:', point);
+        }
+      }
+    };
+
+    (chart as unknown as {
+      subscribeAction: (event: string, handler: (data: unknown) => void) => void;
+    }).subscribeAction('onCrosshairChange', handleCrosshair);
+
+    return () => {
+      (chart as unknown as {
+        unsubscribeAction: (event: string, handler: (data: unknown) => void) => void;
+      }).unsubscribeAction('onCrosshairChange', handleCrosshair);
     };
   }, [showBollinger, bollingerData]);
 

@@ -14,6 +14,23 @@ interface TabsProps {
   className?: string;
 }
 
+interface TabsComponentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface TabsTriggerProps {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface TabsContentProps {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
 export const Tabs: React.FC<TabsProps> = ({ defaultValue, children, className = '' }) => {
   const [value, setValue] = useState(defaultValue);
   
@@ -24,7 +41,7 @@ export const Tabs: React.FC<TabsProps> = ({ defaultValue, children, className = 
   );
 };
 
-export const TabsList: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
+export const TabsList: React.FC<TabsComponentProps> = ({ 
   children, 
   className = '' 
 }) => {
@@ -35,9 +52,10 @@ export const TabsList: React.FC<{ children: React.ReactNode; className?: string 
   );
 };
 
-export const TabsTrigger: React.FC<{ value: string; children: React.ReactNode }> = ({ 
+export const TabsTrigger: React.FC<TabsTriggerProps> = ({ 
   value, 
-  children 
+  children,
+  className = ''
 }) => {
   const context = useContext(TabsContext);
   if (!context) throw new Error('TabsTrigger must be used within Tabs');
@@ -46,26 +64,28 @@ export const TabsTrigger: React.FC<{ value: string; children: React.ReactNode }>
   
   return (
     <button
+      type="button"
       onClick={() => context.onValueChange(value)}
       className={`px-3 py-2 text-sm rounded transition-colors ${
         isActive 
           ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
           : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-      }`}
+      } ${className}`}
     >
       {children}
     </button>
   );
 };
 
-export const TabsContent: React.FC<{ value: string; children: React.ReactNode }> = ({ 
+export const TabsContent: React.FC<TabsContentProps> = ({ 
   value, 
-  children 
+  children,
+  className = ''
 }) => {
   const context = useContext(TabsContext);
   if (!context) throw new Error('TabsContent must be used within Tabs');
   
   if (context.value !== value) return null;
   
-  return <div className="mt-4">{children}</div>;
+  return <div className={`mt-4 ${className}`}>{children}</div>;
 };

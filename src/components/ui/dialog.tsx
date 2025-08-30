@@ -8,6 +8,15 @@ interface DialogProps {
   children: React.ReactNode;
 }
 
+interface DialogComponentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface DialogCloseProps {
+  onClick: () => void;
+}
+
 export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
   if (!open) return null;
   
@@ -21,21 +30,26 @@ export const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) 
   );
 };
 
-export const DialogContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <div className="p-6">{children}</div>;
+export const DialogContent: React.FC<DialogComponentProps> = ({ children, className = '' }) => {
+  return <div className={`p-6 ${className}`}>{children}</div>;
 };
 
-export const DialogHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <div className="flex items-center justify-between mb-4">{children}</div>;
+export const DialogHeader: React.FC<DialogComponentProps> = ({ children, className = '' }) => {
+  return <div className={`flex items-center justify-between mb-4 ${className}`}>{children}</div>;
 };
 
-export const DialogTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <h2 className="text-lg font-semibold">{children}</h2>;
+export const DialogTitle: React.FC<DialogComponentProps> = ({ children, className = '' }) => {
+  return <h2 className={`text-lg font-semibold ${className}`}>{children}</h2>;
 };
 
-export const DialogClose: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+export const DialogClose: React.FC<DialogCloseProps> = ({ onClick }) => {
   return (
-    <button onClick={onClick} className="text-gray-400 hover:text-gray-600">
+    <button 
+      onClick={onClick} 
+      className="text-gray-400 hover:text-gray-600 transition-colors"
+      type="button"
+      aria-label="Close dialog"
+    >
       <X size={20} />
     </button>
   );
