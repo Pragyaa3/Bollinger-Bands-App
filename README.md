@@ -4,7 +4,7 @@ A production-ready Bollinger Bands indicator built with React, Next.js, TypeScri
 
 [🚀 View Live Demo - Bollinger Bands App](https://bollinger-bands-app.vercel.app/)
 
-## 🚀 Features
+## ✨ Features
 
 - **Interactive Candlestick Chart**: Built with KLineCharts library
 - **Bollinger Bands Indicator**: Full implementation with configurable settings
