@@ -2,7 +2,7 @@
 
 A production-ready Bollinger Bands indicator built with React, Next.js, TypeScript, Tailwind CSS, and KLineCharts. This project was developed as part of the FindScan frontend internship assignment.
 
-![Bollinger Bands Live Demo](https://bollinger-bands-app.vercel.app/)
+[🚀 View Live Demo - Bollinger Bands App](https://bollinger-bands-app.vercel.app/)
 
 ## 🚀 Features
 
